@@ -54,6 +54,8 @@ myKeys x =
     , ((modMask x .|. controlMask, xK_period), spawn "ossvol -i 1")
     , ((modMask x .|. controlMask, xK_semicolon), spawn "ossvol -t")
     , ((modMask x .|. controlMask,   xK_r         ), unsafeSpawn "xmonad --recompile && xmonad --restart")
+    , ((modMask x .|. controlMask, xK_l), sendMessage Shrink)
+    , ((modMask x .|. controlMask, xK_h), sendMessage Expand)
     ] ++ zip (zip (repeat (modMask x)) workspaceKeys) (map (withNthWorkspace W.greedyView) [0..])
       ++
       zip (zip (repeat (modMask x .|. shiftMask)) workspaceKeys) (map (withNthWorkspace W.shift) [0..])
