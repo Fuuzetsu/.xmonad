@@ -62,7 +62,11 @@ myKeys x =
     nc = "nitrogen --restore &"
     xrl = "xrandr --output LVDS1"
     xrv = "xrandr --output VGA1"
-    workKeys = [xK_F1..xK_F12]
+    workKeys = [ xK_equal, xK_asterisk, xK_parenright, xK_plus, xK_bracketright
+               , xK_f, xK_g, xK_c, xK_r, xK_l
+               , xK_d, xK_h, xK_t, xK_n, xK_s
+               , xK_b, xK_m, xK_w, xK_v, xK_z
+               ]
 
 
 newKeys x = keys defaultConfig x `M.union` M.fromList (myKeys x)
