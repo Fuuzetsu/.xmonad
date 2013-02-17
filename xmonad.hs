@@ -53,7 +53,7 @@ myKeys x =
     , ((modMask x .|. controlMask, xK_comma), spawn "ossvol -d 1")
     , ((modMask x .|. controlMask, xK_period), spawn "ossvol -i 1")
     , ((modMask x .|. controlMask, xK_semicolon), spawn "ossvol -t")
-    , ((modMask x .|. controlMask,   xK_r         ), unsafeSpawn "xmonad --recompile && xmonad --restart")
+    , ((modMask x .|. controlMask, xK_r), unsafeSpawn "xmonad --recompile && xmonad --restart")
     , ((modMask x .|. controlMask, xK_l), sendMessage Shrink)
     , ((modMask x .|. controlMask, xK_h), sendMessage Expand)
     ] ++ zip (zip (repeat (modMask x)) workspaceKeys) (map (withNthWorkspace W.greedyView) [0..])
@@ -70,7 +70,7 @@ workspaceKeys = [ xK_equal, xK_asterisk, xK_parenright, xK_plus, xK_bracketright
                 , xK_b, xK_m, xK_w, xK_v, xK_z
                 ] 
 
--- Don't change the union order! It overrides def
+-- Don't change the union order! It overrides default keys.
 newKeys x =  M.fromList (myKeys x) `M.union` keys defaultConfig x 
 
 
