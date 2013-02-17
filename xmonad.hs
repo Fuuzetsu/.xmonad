@@ -56,6 +56,7 @@ myKeys x =
     , ((modMask x .|. controlMask, xK_r), unsafeSpawn "xmonad --recompile && xmonad --restart")
     , ((modMask x .|. controlMask, xK_l), sendMessage Shrink)
     , ((modMask x .|. controlMask, xK_h), sendMessage Expand)
+    , ((modMask x .|. controlMask, xK_u), withFocused $ windows . W.sink)
     ] ++ zip (zip (repeat (modMask x)) workspaceKeys) (map (withNthWorkspace W.greedyView) [0..])
       ++
       zip (zip (repeat (modMask x .|. shiftMask)) workspaceKeys) (map (withNthWorkspace W.shift) [0..])
