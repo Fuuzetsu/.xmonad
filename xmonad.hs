@@ -55,13 +55,15 @@ myKeys x =
     , ((modMask x .|. controlMask, xK_period), spawn "ossvol -i 1")
     , ((modMask x .|. controlMask, xK_semicolon), spawn "ossvol -t")
     , ((modMask x .|. controlMask,   xK_r         ), unsafeSpawn "xmonad --recompile && xmonad --restart")
-    ] ++ zip (zip (repeat (modMask x)) [xK_F1..xK_F12]) (map (withNthWorkspace W.greedyView) [0..])
+    ] ++ zip (zip (repeat (modMask x)) workKeys) (map (withNthWorkspace W.greedyView) [0..])
       ++
-      zip (zip (repeat (modMask x .|. shiftMask)) [xK_F1..xK_F12]) (map (withNthWorkspace W.shift) [0..])
+      zip (zip (repeat (modMask x .|. shiftMask)) workKeys) (map (withNthWorkspace W.shift) [0..])
   where
     nc = "nitrogen --restore &"
     xrl = "xrandr --output LVDS1"
     xrv = "xrandr --output VGA1"
+    workKeys = [xK_F1..xK_F12]
+
 
 newKeys x = keys defaultConfig x `M.union` M.fromList (myKeys x)
 
