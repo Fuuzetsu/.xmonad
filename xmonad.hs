@@ -38,8 +38,7 @@ newManageHook = myManageHook <+> manageHook defaultConfig <+> manageDocks <+> (c
   where myClassFloats = [] -- ["ghc"]
 
 myKeys x =
-    [ ((modMask x .|. controlMask, xK_s), sshPrompt defaultXPConfig)
-    , ((modMask x .|. controlMask, xK_p), shellPrompt defaultXPConfig)
+    [ ((modMask x .|. controlMask, xK_p), shellPrompt defaultXPConfig)
     , ((modMask x .|. controlMask, xK_b), sendMessage ToggleStruts)
     , ((modMask x .|. controlMask, xK_i), captureWorkspacesWhen defaultPredicate defaultHook horizontally)
     , ((modMask x .|. controlMask, xK_t), spawn $ xrl ++ " --mode 1024x768 && " ++ nc)
@@ -55,21 +54,22 @@ myKeys x =
     , ((modMask x .|. controlMask, xK_period), spawn "ossvol -i 1")
     , ((modMask x .|. controlMask, xK_semicolon), spawn "ossvol -t")
     , ((modMask x .|. controlMask,   xK_r         ), unsafeSpawn "xmonad --recompile && xmonad --restart")
-    ] ++ zip (zip (repeat (modMask x)) workKeys) (map (withNthWorkspace W.greedyView) [0..])
+    ] ++ zip (zip (repeat (modMask x)) workspaceKeys) (map (withNthWorkspace W.greedyView) [0..])
       ++
-      zip (zip (repeat (modMask x .|. shiftMask)) workKeys) (map (withNthWorkspace W.shift) [0..])
+      zip (zip (repeat (modMask x .|. shiftMask)) workspaceKeys) (map (withNthWorkspace W.shift) [0..])
   where
     nc = "nitrogen --restore &"
     xrl = "xrandr --output LVDS1"
     xrv = "xrandr --output VGA1"
-    workKeys = [ xK_equal, xK_asterisk, xK_parenright, xK_plus, xK_bracketright
-               , xK_f, xK_g, xK_c, xK_r, xK_l
-               , xK_d, xK_h, xK_t, xK_n, xK_s
-               , xK_b, xK_m, xK_w, xK_v, xK_z
-               ]
 
+workspaceKeys = [ xK_equal, xK_asterisk, xK_parenright, xK_plus, xK_bracketright
+                , xK_f, xK_g, xK_c, xK_r, xK_l
+                , xK_d, xK_h, xK_t, xK_n, xK_s
+                , xK_b, xK_m, xK_w, xK_v, xK_z
+                ] 
 
-newKeys x = keys defaultConfig x `M.union` M.fromList (myKeys x)
+-- Don't change the union order! It overrides def
+newKeys x =  M.fromList (myKeys x) `M.union` keys defaultConfig x 
 
 
 myLayoutHook = avoidStruts (tiled ||| Mirror tiled ||| Circle ||| Full)
@@ -104,5 +104,5 @@ main = do
              , normalBorderColor = myNormalBorderColor
              , focusedBorderColor = myFocusedBorderColor
             -- , startupHook = myStartHook
-             , XMonad.workspaces = map show [0 .. 11]
+             , XMonad.workspaces = map show [0 .. length workspaceKeys]
              }
