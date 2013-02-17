@@ -1,0 +1,13 @@
+\#*\#
+*.o
+*.hi
+*~
+*.png
+xmonad-i*-linux
+xmonad.errors
+/dzen2start
+/tweymonad.hs
+/xmonad
+/start_xmonad.sh
+/mymonad.hs
+/history
