@@ -24,11 +24,14 @@ import XMonad.Actions.DynamicWorkspaces
 import XMonad.Actions.CopyWindow (copy)
 import XMonad.StackSet as W
 import XMonad.Util.WorkspaceScreenshot
+import XMonad.Actions.WorkspaceNames
+import XMonad.Actions.SpawnOn
 
 myNormalBorderColor = "#ffffff"
 myFocusedBorderColor = "#000000"
 
-myManageHook = composeAll [ className =? "XCalc" --> doFloat, className =? "display" --> doFloat
+myManageHook = composeAll [ className =? "emacs" --> doShift "5:emacs"
+                          , className =? "xclock" --> doFloat
                           ]
 
 newManageHook = myManageHook <+> manageHook defaultConfig <+> manageDocks <+> (composeAll . concat $
@@ -88,6 +91,10 @@ myLogHook :: X ()
 myLogHook = fadeInactiveLogHook fadeAmount
      where fadeAmount = 0.55
 
+myWorkspaces = [ "1:images", "2:web", "3:irc", "4:music", "5:emacs"
+               , "6:rtorrent", "7:mail", "8:compile", "9:volume", "10:monitors"
+               , "10:media", "11:pdf", "12:term", "13:misc", "14:trash"
+               ]
 
 --spawnOnce ". $HOME/.xmonad/dzen2sto
 myStartHook = setDefaultCursor xC_left_ptr <+>
@@ -108,5 +115,5 @@ main = do
              , normalBorderColor = myNormalBorderColor
              , focusedBorderColor = myFocusedBorderColor
              -- , startupHook = myStartHook
-             , XMonad.workspaces = map show [0 .. length workspaceKeys]
+             , XMonad.workspaces = myWorkspaces
              }
