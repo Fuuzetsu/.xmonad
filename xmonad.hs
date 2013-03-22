@@ -28,7 +28,7 @@ import XMonad.Util.WorkspaceScreenshot
 myNormalBorderColor = "#ffffff"
 myFocusedBorderColor = "#000000"
 
-myManageHook = composeAll [ className =? "XCalc" --> doFloat, className =? "display" --> doFloat 
+myManageHook = composeAll [ className =? "XCalc" --> doFloat, className =? "display" --> doFloat
                           ]
 
 newManageHook = myManageHook <+> manageHook defaultConfig <+> manageDocks <+> (composeAll . concat $
@@ -39,7 +39,8 @@ newManageHook = myManageHook <+> manageHook defaultConfig <+> manageDocks <+> (c
 
 myKeys x =
     [ ((modMask x .|. controlMask, xK_p), shellPrompt defaultXPConfig)
-    , ((modMask x .|. controlMask, xK_b), sendMessage ToggleStruts)
+    , ((modMask x .|. shiftMask, xK_y), kill)
+    , ((modMask x .|. controlMask, xK_e), sendMessage ToggleStruts)
     , ((modMask x .|. controlMask, xK_i), captureWorkspacesWhen defaultPredicate defaultHook horizontally)
     , ((modMask x .|. controlMask, xK_t), spawn $ xrl ++ " --mode 1024x768 && " ++ nc)
     , ((modMask x .|. controlMask, xK_w), spawn $ xrl ++ " --off && " ++ nc)
@@ -54,10 +55,11 @@ myKeys x =
     , ((modMask x .|. controlMask, xK_period), spawn "ossvol -i 1")
     , ((modMask x .|. controlMask, xK_semicolon), spawn "ossvol -t")
     , ((modMask x .|. controlMask, xK_r), unsafeSpawn "xmonad --recompile && xmonad --restart")
-    , ((modMask x .|. controlMask, xK_l), sendMessage Shrink)
-    , ((modMask x .|. controlMask, xK_h), sendMessage Expand)
+    , ((modMask x .|. controlMask, xK_l), sendMessage Expand)
+    , ((modMask x .|. controlMask, xK_h), sendMessage Shrink)
     , ((modMask x .|. controlMask, xK_u), withFocused $ windows . W.sink)
-    , ((modMask x .|. controlMask, xK_m), spawn "killall xmobar; xmobar &")
+    , ((modMask x .|. controlMask, xK_a), spawn "killall xmobar; xmobar &")
+    , ((modMask x .|. controlMask, xK_o), spawn "killall xmobar; xmobar -o ~/.Xmobar/infosmall &")
     ] ++ zip (zip (repeat (modMask x)) workspaceKeys) (map (withNthWorkspace W.greedyView) [0..])
       ++
       zip (zip (repeat (modMask x .|. shiftMask)) workspaceKeys) (map (withNthWorkspace W.shift) [0..])
@@ -66,14 +68,13 @@ myKeys x =
     xrl = "xrandr --output LVDS1"
     xrv = "xrandr --output VGA1"
 
-workspaceKeys = [ xK_equal, xK_asterisk, xK_parenright, xK_plus, xK_bracketright
-                , xK_f, xK_g, xK_c, xK_r, xK_l
+workspaceKeys = [ xK_f, xK_g, xK_c, xK_r, xK_l
                 , xK_d, xK_h, xK_t, xK_n, xK_s
                 , xK_b, xK_m, xK_w, xK_v, xK_z
-                ] 
+                ]
 
 -- Don't change the union order! It overrides default keys.
-newKeys x =  M.fromList (myKeys x) `M.union` keys defaultConfig x 
+newKeys x =  M.fromList (myKeys x) `M.union` keys defaultConfig x
 
 
 myLayoutHook = avoidStruts (tiled ||| Mirror tiled ||| Circle ||| Full)
@@ -100,13 +101,12 @@ main = do
              , modMask = mod4Mask
              , terminal = "urxvt"
              , manageHook = newManageHook
---             , logHook = dynamicLogWithPP defaultPP { ppOutput = hPutStrLn xmobar}
              , logHook = myLogHook
              , keys = newKeys
              , layoutHook = myLayoutHook
              , handleEventHook = docksEventHook
              , normalBorderColor = myNormalBorderColor
              , focusedBorderColor = myFocusedBorderColor
-            -- , startupHook = myStartHook
+             -- , startupHook = myStartHook
              , XMonad.workspaces = map show [0 .. length workspaceKeys]
              }
