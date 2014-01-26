@@ -63,6 +63,7 @@ myKeys x =
     , ((modMask x .|. controlMask, xK_u), withFocused $ windows . W.sink)
     , ((modMask x .|. controlMask, xK_a), spawn "killall xmobar; xmobar &")
     , ((modMask x .|. controlMask, xK_o), spawn "killall xmobar; xmobar -o ~/.Xmobar/infosmall &")
+    , ((modMask x .|. controlMask, xK_semicolon), spawn "slimlock")
     ] ++ zip (zip (repeat (modMask x)) workspaceKeys) (map (withNthWorkspace W.greedyView) [0..])
       ++
       zip (zip (repeat (modMask x .|. shiftMask)) workspaceKeys) (map (withNthWorkspace W.shift) [0..])
