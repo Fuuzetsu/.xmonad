@@ -23,18 +23,18 @@ import XMonad.Hooks.SetWMName
 import XMonad.Actions.DynamicWorkspaces
 import XMonad.Actions.CopyWindow (copy)
 import XMonad.StackSet as W
-import XMonad.Util.WorkspaceScreenshot
+--import XMonad.Util.WorkspaceScreenshot
 import XMonad.Actions.WorkspaceNames
 import XMonad.Actions.SpawnOn
 
 myNormalBorderColor = "#ffffff"
 myFocusedBorderColor = "#000000"
 
-myManageHook = composeAll [ className =? "emacs" --> doShift "5:emacs"
+myManageHook = composeAll [ className =? "emacs" --> doF (W.shift "5:emacs")
                           , className =? "xclock" --> doFloat
                           ]
 
-newManageHook = myManageHook <+> manageHook defaultConfig <+> manageDocks <+> (composeAll . concat $
+newManageHook =  myManageHook <+> manageDocks <+> (composeAll . concat $
                 [
                   [ className =? i --> doFloat | i <- myClassFloats ]
                 ])
@@ -44,7 +44,7 @@ myKeys x =
     [ ((modMask x .|. controlMask, xK_p), shellPrompt defaultXPConfig)
     , ((modMask x .|. shiftMask, xK_y), kill)
     , ((modMask x .|. controlMask, xK_e), sendMessage ToggleStruts)
-    , ((modMask x .|. controlMask, xK_i), captureWorkspacesWhen defaultPredicate defaultHook horizontally)
+--    , ((modMask x .|. controlMask, xK_i), captureWorkspacesWhen defaultPredicate defaultHook horizontally)
     , ((modMask x .|. controlMask, xK_t), spawn $ xrl ++ " --mode 1024x768 && " ++ nc)
     , ((modMask x .|. controlMask, xK_w), spawn $ xrl ++ " --off && " ++ nc)
     , ((modMask x .|. controlMask, xK_n), spawn $ xrv ++ " --mode 1920x1080 && " ++ nc)
@@ -102,7 +102,7 @@ myStartHook = setDefaultCursor xC_left_ptr <+>
 
 
 main = do
-  initCapturing -- necessary for xmonad-screenshot
+  -- initCapturing -- necessary for xmonad-screenshot
   xmonad $ defaultConfig
              { borderWidth = 0
              , modMask = mod4Mask
