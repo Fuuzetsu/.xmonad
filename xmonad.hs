@@ -1,87 +1,68 @@
+{-# LANGUAGE DataKinds, GADTs, TypeOperators #-}
+import Data.Map (fromList, union, Map)
+import Data.Monoid
+import Foreign.C.Types (CUInt)
 import XMonad
-import XMonad.Layout
-import XMonad.Hooks.DynamicLog
-import XMonad.Hooks.ManageDocks
-import XMonad.Hooks.SetWMName
-import System.IO (hPutStrLn)
-import XMonad.Prompt
-import XMonad.Prompt.Shell
-import XMonad.Prompt.Ssh
-import qualified Data.Map as M
-import XMonad.Layout.Circle
-import XMonad.Layout.Grid
-import XMonad.Layout.Magnifier
-import Data.Ratio
-import XMonad.Layout.LayoutHints
-import XMonad.Layout.Spiral
-import XMonad.Hooks.FadeInactive
-import XMonad.Util.SpawnOnce
-import XMonad.Util.Cursor
-import XMonad.Util.Run
-import XMonad.Hooks.EwmhDesktops (ewmhDesktopsStartup)
-import XMonad.Hooks.SetWMName
 import XMonad.Actions.DynamicWorkspaces
-import XMonad.Actions.CopyWindow (copy)
-import XMonad.StackSet as W
---import XMonad.Util.WorkspaceScreenshot
-import XMonad.Actions.WorkspaceNames
-import XMonad.Actions.SpawnOn
+import XMonad.Hooks.EwmhDesktops (ewmhDesktopsStartup)
+import XMonad.Hooks.FadeInactive (fadeInactiveLogHook)
+import XMonad.Hooks.ManageDocks
+import XMonad.Hooks.ManageHelpers (doCenterFloat)
+import XMonad.Hooks.SetWMName (setWMName)
+import XMonad.Layout.Circle (Circle(..))
+import XMonad.Layout.LayoutModifier (ModifiedLayout)
+import XMonad.Prompt (defaultXPConfig)
+import XMonad.Prompt.Shell (shellPrompt)
+import XMonad.StackSet (sink, greedyView, shift, StackSet)
+import XMonad.Util.Cursor (setDefaultCursor)
 
-myNormalBorderColor = "#ffffff"
-myFocusedBorderColor = "#000000"
+-- * Workspaces
 
-myManageHook = composeAll [ className =? "emacs" --> doF (W.shift "5:emacs")
-                          , className =? "xclock" --> doFloat
-                          ]
+data MyWorkspace = Pdf | Web | Emacs | Music | Images
+                 | Media | Mail | Misc | Torrent | Monitors
+                 deriving (Eq, Show, Enum, Bounded)
 
-newManageHook =  myManageHook <+> manageDocks <+> (composeAll . concat $
-                [
-                  [ className =? i --> doFloat | i <- myClassFloats ]
-                ])
-  where myClassFloats = [] -- ["ghc"]
+myWorkspaces :: [String]
+myWorkspaces = map show ([minBound ..] :: [MyWorkspace])
 
-myKeys x =
-    [ ((modMask x .|. controlMask, xK_p), shellPrompt defaultXPConfig)
-    , ((modMask x .|. shiftMask, xK_y), kill)
-    , ((modMask x .|. controlMask, xK_e), sendMessage ToggleStruts)
---    , ((modMask x .|. controlMask, xK_i), captureWorkspacesWhen defaultPredicate defaultHook horizontally)
-    , ((modMask x .|. controlMask, xK_t), spawn $ xrl ++ " --mode 1024x768 && " ++ nc)
-    , ((modMask x .|. controlMask, xK_w), spawn $ xrl ++ " --off && " ++ nc)
-    , ((modMask x .|. controlMask, xK_n), spawn $ xrv ++ " --mode 1920x1080 && " ++ nc)
-    , ((modMask x .|. controlMask, xK_v), spawn $ xrv ++ " --off && " ++ nc)
-    , ((modMask x .|. controlMask, xK_s), spawn $ xrv ++ " --mode 1600x900 && " ++ nc)
-    , ((modMask x .|. controlMask, xK_z), spawn "slimlock")
-    , ((0, stringToKeysym "XF86AudioLowerVolume"), spawn "ossvol -d 1")
-    , ((0, stringToKeysym "XF86AudioRaiseVolume"), spawn "ossvol -i 1")
-    , ((0, stringToKeysym "XF86AudioMute"), spawn "ossvol -t")
-    , ((modMask x .|. controlMask, xK_comma), spawn "ossvol -d 1")
-    , ((modMask x .|. controlMask, xK_period), spawn "ossvol -i 1")
-    , ((modMask x .|. controlMask, xK_semicolon), spawn "ossvol -t")
-    , ((modMask x .|. controlMask, xK_r), unsafeSpawn "xmonad --recompile && xmonad --restart")
-    , ((modMask x .|. controlMask, xK_l), sendMessage Expand)
-    , ((modMask x .|. controlMask, xK_h), sendMessage Shrink)
-    , ((modMask x .|. controlMask, xK_u), withFocused $ windows . W.sink)
-    , ((modMask x .|. controlMask, xK_a), spawn "killall xmobar; xmobar &")
-    , ((modMask x .|. controlMask, xK_o), spawn "killall xmobar; xmobar -o ~/.Xmobar/infosmall &")
-    , ((modMask x .|. controlMask, xK_semicolon), spawn "slimlock")
-    ] ++ zip (zip (repeat (modMask x)) workspaceKeys) (map (withNthWorkspace W.greedyView) [0..])
-      ++
-      zip (zip (repeat (modMask x .|. shiftMask)) workspaceKeys) (map (withNthWorkspace W.shift) [0..])
-  where
-    nc = "nitrogen --restore &"
-    xrl = "xrandr --output LVDS1"
-    xrv = "xrandr --output VGA1"
-
+workspaceKeys :: [KeySym]
 workspaceKeys = [ xK_f, xK_g, xK_c, xK_r, xK_l
                 , xK_d, xK_h, xK_t, xK_n, xK_s
-                , xK_b, xK_m, xK_w, xK_v, xK_z
                 ]
 
--- Don't change the union order! It overrides default keys.
-newKeys x =  M.fromList (myKeys x) `M.union` keys defaultConfig x
+-- * Hooks
 
+type LayoutStack = StackSet String (Layout Window) Window ScreenId ScreenDetail
+type LayoutHook = Query (Endo LayoutStack)
 
-myLayoutHook = avoidStruts (tiled ||| Mirror tiled ||| Circle ||| Full)
+workspaceHook :: LayoutHook
+workspaceHook = composeAll [ -- "feh"   ~> Images
+                             -- , "Emacs" ~> Emacs
+                             -- , "mpv"   ~> Media
+                           ]
+  -- where
+  --   (~>) :: String -> MyWorkspace -> LayoutHook
+  --   s ~> w = className =? s --> doShift (show w)
+
+data FloatStyle = Default | Center deriving (Show, Eq)
+type FloatingSetting = (FloatStyle, String)
+
+newManageHook :: LayoutHook
+newManageHook = manageDocks
+                <+> composeAll (map floater floats)
+                <+> workspaceHook
+  where floats :: [FloatingSetting]
+        floats = [ (Center, "mpv"), (Center, "feh") ]
+
+        floater :: FloatingSetting -> ManageHook
+        floater (t, i) = className =? i --> case t of
+          Default -> doFloat
+          Center -> doCenterFloat
+
+myLayoutHook :: ModifiedLayout AvoidStruts
+                (Choose Tall (Choose (Mirror Tall) (Choose Circle Full)))
+                Window
+myLayoutHook = avoidStruts $ tiled ||| Mirror tiled ||| Circle ||| Full
     where
       tiled = Tall nmaster delta ratio
       nmaster = 1
@@ -92,29 +73,54 @@ myLogHook :: X ()
 myLogHook = fadeInactiveLogHook fadeAmount
      where fadeAmount = 0.55
 
-myWorkspaces = [ "1:images", "2:web", "3:irc", "4:music", "5:emacs"
-               , "6:rtorrent", "7:mail", "8:compile", "9:volume", "10:monitors"
-               , "10:media", "11:pdf", "12:term", "13:misc", "14:trash"
-               ]
-
---spawnOnce ". $HOME/.xmonad/dzen2sto
+myStartHook :: X ()
 myStartHook = setDefaultCursor xC_left_ptr <+>
               ewmhDesktopsStartup >> setWMName "LG3D"
 
+-- * Keys
 
-main = do
-  -- initCapturing -- necessary for xmonad-screenshot
-  xmonad $ defaultConfig
-             { borderWidth = 0
-             , modMask = mod4Mask
-             , terminal = "urxvt"
-             , manageHook = newManageHook
-             , logHook = myLogHook
-             , keys = newKeys
-             , layoutHook = myLayoutHook
-             , handleEventHook = docksEventHook
-             , normalBorderColor = myNormalBorderColor
-             , focusedBorderColor = myFocusedBorderColor
-             -- , startupHook = myStartHook
-             , XMonad.workspaces = myWorkspaces
-             }
+myKeys :: XConfig l -> [((KeyMask, KeySym), X ())]
+myKeys x =
+    [ ((modCtrl,  xK_p), shellPrompt defaultXPConfig)
+    , ((modShift, xK_y), kill)
+    , ((modCtrl,  xK_e), sendMessage ToggleStruts)
+    , ((modCtrl,  xK_b), spawn "amixer set 'Master' 10%-")
+    , ((modCtrl,  xK_m), spawn "amixer set 'Master' 10%+")
+    , ((modCtrl,  xK_l), sendMessage Expand)
+    , ((modCtrl,  xK_h), sendMessage Shrink)
+    , ((modCtrl,  xK_u), withFocused $ windows . sink)
+    , ((modCtrl,  xK_equal), spawn "mpv `xsel`")
+    , ((modCtrl,  xK_semicolon), spawn "slimlock")
+    , ((modCtrl,  xK_asterisk), spawn "feh --scale-down `xsel`")
+    ] ++ bindWs modM greedyView
+      ++ bindWs modShift shift
+
+  where
+    bindWs :: a -> (String -> WindowSet -> WindowSet) -> [((a, KeySym), X())]
+    bindWs k f = zip (zip (repeat k) workspaceKeys)
+                     (map (withNthWorkspace f) [0..])
+
+    modM, modCtrl, modShift :: CUInt
+    modM = modMask x
+    modCtrl =  modM .|. controlMask
+    modShift = modM .|. shiftMask
+
+-- Don't change the union order! It overrides default keys.
+newKeys :: XConfig Layout -> Map (KeyMask, KeySym) (X ())
+newKeys x =  fromList (myKeys x) `union` keys defaultConfig x
+
+-- * Main
+
+main :: IO ()
+main = xmonad $ defaultConfig
+  { borderWidth = 0
+  , modMask = mod4Mask
+  , terminal = "urxvt"
+  , manageHook = newManageHook
+  , logHook = myLogHook
+  , keys = newKeys
+  , layoutHook = myLayoutHook
+  , handleEventHook = docksEventHook
+  -- , startupHook = myStartHook
+  , XMonad.workspaces = myWorkspaces
+  }
