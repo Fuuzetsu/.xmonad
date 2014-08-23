@@ -36,13 +36,19 @@ type LayoutStack = StackSet String (Layout Window) Window ScreenId ScreenDetail
 type LayoutHook = Query (Endo LayoutStack)
 
 workspaceHook :: LayoutHook
-workspaceHook = composeAll [ -- "feh"   ~> Images
-                             -- , "Emacs" ~> Emacs
-                             -- , "mpv"   ~> Media
+workspaceHook = composeAll [ "MuPDF"        ~> Pdf
+                           , ".dwb-wrapped" ~> Web
+                           , "Emacs"        ~> Emacs
+                           , "cantata"      ~> Music
+                           , "feh"          ~> Images
+                           , "mcomix"       ~> Images
+                           , "ristretto"    ~> Images
+                           , "mpv"          ~> Media
+                           , "Thunderbird"  ~> Mail
                            ]
-  -- where
-  --   (~>) :: String -> MyWorkspace -> LayoutHook
-  --   s ~> w = className =? s --> doShift (show w)
+  where
+    (~>) :: String -> MyWorkspace -> LayoutHook
+    s ~> w = className =? s --> doShift (show w)
 
 data FloatStyle = Default | Center deriving (Show, Eq)
 type FloatingSetting = (FloatStyle, String)
