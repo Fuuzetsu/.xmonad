@@ -58,7 +58,7 @@ newManageHook = manageDocks
                 <+> composeAll (map floater floats)
                 <+> workspaceHook
   where floats :: [FloatingSetting]
-        floats = [ (Center, "mpv"), (Center, "feh") ]
+        floats = [ (Center, "feh") ]
 
         floater :: FloatingSetting -> ManageHook
         floater (t, i) = className =? i --> case t of
@@ -78,10 +78,6 @@ myLayoutHook = avoidStruts $ tiled ||| Mirror tiled ||| Circle ||| Full
 myLogHook :: X ()
 myLogHook = fadeInactiveLogHook fadeAmount
      where fadeAmount = 0.55
-
-myStartHook :: X ()
-myStartHook = setDefaultCursor xC_left_ptr <+>
-              ewmhDesktopsStartup >> setWMName "LG3D"
 
 -- * Keys
 
@@ -127,6 +123,5 @@ main = xmonad $ defaultConfig
   , keys = newKeys
   , layoutHook = myLayoutHook
   , handleEventHook = docksEventHook
-  -- , startupHook = myStartHook
   , XMonad.workspaces = myWorkspaces
   }
