@@ -1,20 +1,20 @@
 {-# LANGUAGE DataKinds, GADTs, TypeOperators #-}
+module Main where
+
 import Data.Map (fromList, union, Map)
 import Data.Monoid
 import Foreign.C.Types (CUInt)
 import XMonad
 import XMonad.Actions.DynamicWorkspaces
-import XMonad.Hooks.EwmhDesktops (ewmhDesktopsStartup)
+import XMonad.Actions.KeyRemap
 import XMonad.Hooks.FadeInactive (fadeInactiveLogHook)
 import XMonad.Hooks.ManageDocks
 import XMonad.Hooks.ManageHelpers (doCenterFloat)
-import XMonad.Hooks.SetWMName (setWMName)
 import XMonad.Layout.Circle (Circle(..))
 import XMonad.Layout.LayoutModifier (ModifiedLayout)
 import XMonad.Prompt (defaultXPConfig)
 import XMonad.Prompt.Shell (shellPrompt)
 import XMonad.StackSet (sink, greedyView, shift, StackSet)
-import XMonad.Util.Cursor (setDefaultCursor)
 
 -- * Workspaces
 
@@ -83,7 +83,7 @@ myLogHook = fadeInactiveLogHook fadeAmount
 
 myKeys :: XConfig l -> [((KeyMask, KeySym), X ())]
 myKeys x =
-    [ ((modCtrl,  xK_p), shellPrompt defaultXPConfig)
+    [ ((modCtrl,  xK_p), shellPrompt def)
     , ((modShift, xK_y), kill)
     , ((modCtrl,  xK_e), sendMessage ToggleStruts)
     , ((modCtrl,  xK_b), spawn "amixer set 'Master' 10%-")
@@ -91,12 +91,10 @@ myKeys x =
     , ((modCtrl,  xK_l), sendMessage Expand)
     , ((modCtrl,  xK_h), sendMessage Shrink)
     , ((modCtrl,  xK_u), withFocused $ windows . sink)
-    , ((modCtrl,  xK_equal), spawn "mpv `xsel`")
-    , ((modCtrl,  xK_semicolon), spawn "slimlock")
-    , ((modCtrl,  xK_asterisk), spawn "feh --scale-down `xsel`")
+    , ((modCtrl,  xK_semicolon), spawn "xscreensaver-command -lock")
     ] ++ bindWs modM greedyView
       ++ bindWs modShift shift
-
+--      ++ buildKeyRemapBindings remaps
   where
     bindWs :: a -> (String -> WindowSet -> WindowSet) -> [((a, KeySym), X())]
     bindWs k f = zip (zip (repeat k) workspaceKeys)
@@ -107,14 +105,20 @@ myKeys x =
     modCtrl =  modM .|. controlMask
     modShift = modM .|. shiftMask
 
+    setMapWithRate :: KeymapTable -> Int -> X ()
+    setMapWithRate t i = setKeyRemap t >> setDelayRate i
+
+    setDelayRate :: Int -> X ()
+    setDelayRate = spawn . ("xset r rate " ++) . show
+
 -- Don't change the union order! It overrides default keys.
 newKeys :: XConfig Layout -> Map (KeyMask, KeySym) (X ())
-newKeys x =  fromList (myKeys x) `union` keys defaultConfig x
+newKeys x = fromList (myKeys x) `union` keys def x
 
 -- * Main
 
 main :: IO ()
-main = xmonad $ defaultConfig
+main = xmonad $ def
   { borderWidth = 0
   , modMask = mod4Mask
   , terminal = "urxvt"
