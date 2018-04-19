@@ -1,4 +1,5 @@
 {-# LANGUAGE DataKinds, GADTs, TypeOperators #-}
+{-# OPTIONS_GHC -Wall #-}
 module Main where
 
 import Data.Map (fromList, union, Map)
@@ -6,13 +7,11 @@ import Data.Monoid
 import Foreign.C.Types (CUInt)
 import XMonad
 import XMonad.Actions.DynamicWorkspaces
-import XMonad.Actions.KeyRemap
 import XMonad.Hooks.FadeInactive (fadeInactiveLogHook)
 import XMonad.Hooks.ManageDocks
 import XMonad.Hooks.ManageHelpers (doCenterFloat)
 import XMonad.Layout.Circle (Circle(..))
 import XMonad.Layout.LayoutModifier (ModifiedLayout)
-import XMonad.Prompt (defaultXPConfig)
 import XMonad.Prompt.Shell (shellPrompt)
 import XMonad.StackSet (sink, greedyView, shift, StackSet)
 
@@ -94,7 +93,6 @@ myKeys x =
     , ((modCtrl,  xK_semicolon), spawn "xscreensaver-command -lock")
     ] ++ bindWs modM greedyView
       ++ bindWs modShift shift
---      ++ buildKeyRemapBindings remaps
   where
     bindWs :: a -> (String -> WindowSet -> WindowSet) -> [((a, KeySym), X())]
     bindWs k f = zip (zip (repeat k) workspaceKeys)
@@ -104,12 +102,6 @@ myKeys x =
     modM = modMask x
     modCtrl =  modM .|. controlMask
     modShift = modM .|. shiftMask
-
-    setMapWithRate :: KeymapTable -> Int -> X ()
-    setMapWithRate t i = setKeyRemap t >> setDelayRate i
-
-    setDelayRate :: Int -> X ()
-    setDelayRate = spawn . ("xset r rate " ++) . show
 
 -- Don't change the union order! It overrides default keys.
 newKeys :: XConfig Layout -> Map (KeyMask, KeySym) (X ())
